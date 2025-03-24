@@ -4,8 +4,8 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net6.0-windows</TargetFramework>
     <RootNamespace>UpdateError</RootNamespace>
-    <!-- Correction du point d'entrée -->
-    <StartupObject>Program</StartupObject>
+    <!-- Correction du point d'entrée - utilisation de Sub Main -->
+    <StartupObject>Sub Main</StartupObject>
     <UseWindowsForms>true</UseWindowsForms>
     <MyType>WindowsForms</MyType>
   </PropertyGroup>

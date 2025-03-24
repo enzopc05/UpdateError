@@ -1,0 +1,86 @@
+# Fichiers de build et dossiers générés
+bin/
+obj/
+.vs/
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+build/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+
+# Fichiers de projet Visual Studio
+*.user
+*.userosscache
+*.suo
+*.userprefs
+*.vspscc
+*.vssscc
+.builds
+*.pidb
+*.svclog
+*.scc
+*.psess
+*.vsp
+*.vspx
+*.sap
+
+# Fichiers de package NuGet
+*.nupkg
+# Le dossier packages peut être ignoré car on récupère les packages depuis NuGet
+**/packages/*
+# Sauf si vous voulez conserver une version spécifique des packages
+# !**/packages/repository.config
+# NuGet v3's project.json files
+*.nuget.props
+*.nuget.targets
+
+# Fichiers de configuration d'exécution et résultats de tests
+config.ini
+*.dll.config
+*.exe.config
+TestResults/
+
+# Fichiers spécifiques à Visual Studio et ReSharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+.idea/
+*.DotSettings
+
+# Fichiers de logs et bases de données
+*.log
+*.sqlite
+*.mdf
+*.ldf
+
+# Fichiers de cache de Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Fichiers temporaires 
+*~
+*.swp
+*.tmp
+*.temp
+
+# Fichiers spécifiques à MacOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.Spotlight-V100
+.Trashes
+
+# Dossiers et fichiers de sauvegarde
+[Bb]ackup*/
+[Tt]emp/
+*.bak
+*.cache

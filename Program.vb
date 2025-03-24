@@ -1,7 +1,6 @@
 ﻿Imports System
 Imports System.Windows.Forms
 
-' IMPORTANT: Suppression du namespace pour que la méthode Main soit au niveau module
 Module Program
     ' Point d'entrée principal pour l'application
     <STAThread()>
