@@ -2,6 +2,7 @@ Imports System
 Imports System.Drawing
 Imports System.Windows.Forms
 Imports System.Data
+Imports System.IO
 
 Public Class FormMain
     Inherits System.Windows.Forms.Form
@@ -12,12 +13,16 @@ Public Class FormMain
     Private btnRechercher As Button
     Private dgvResultats As DataGridView
     Private lblStatus As Label
+    Private pnlHeader As Panel
+    Private lblTitle As Label
+    Private picLogo As PictureBox
 
+    ' Couleurs de la charte graphique Eurodislog
+    Private ReadOnly colorEurodislogBlue As Color = Color.FromArgb(0, 175, 215)  ' Bleu Eurodislog (#00AFD7)
+    
     ' Constructeur
     Public Sub New()
         InitializeComponent()
-        
-        ' Ajouter menu Configuration
         AjouterMenuConfiguration()
     End Sub
     
@@ -26,9 +31,11 @@ Public Class FormMain
         ' Création du menu principal
         Dim mainMenu As New MenuStrip()
         mainMenu.Dock = DockStyle.Top
+        mainMenu.BackColor = Color.FromArgb(100, 100, 100)  ' Gris foncé
         
         ' Création du menu Fichier
         Dim menuFichier As New ToolStripMenuItem("Fichier")
+        menuFichier.ForeColor = Color.White
         
         ' Création de l'élément de menu Configuration
         Dim menuConfiguration As New ToolStripMenuItem("Configuration de la connexion...")
@@ -67,55 +74,118 @@ Public Class FormMain
     ' Initialisation des composants
     Private Sub InitializeComponent()
         ' Configuration de la fenêtre
-        Me.Text = "Vérification des commandes"
-        Me.Size = New System.Drawing.Size(800, 600)
+        Me.Text = "UpdateError - Eurodislog"
+        Me.Size = New System.Drawing.Size(1200, 800)
         Me.StartPosition = FormStartPosition.CenterScreen
+
+        ' Création du panel d'en-tête avec titre
+        pnlHeader = New Panel()
+        pnlHeader.Dock = DockStyle.Top
+        pnlHeader.Height = 80
+        pnlHeader.BackColor = colorEurodislogBlue
+        
+        ' Création du titre
+        lblTitle = New Label()
+        lblTitle.Text = "Vérification des commandes - UpdateError"
+        lblTitle.Font = New Font("Segoe UI", 18, FontStyle.Bold)
+        lblTitle.ForeColor = Color.White
+        lblTitle.AutoSize = True
+        lblTitle.Location = New Point(20, 25)
+        lblTitle.Anchor = AnchorStyles.Top Or AnchorStyles.Left
+        
+        ' Création du logo (à droite du titre)
+        picLogo = New PictureBox()
+        picLogo.Size = New Size(200, 60)
+        picLogo.Location = New Point(900, 10)
+        picLogo.SizeMode = PictureBoxSizeMode.Zoom
+        picLogo.BackColor = Color.Transparent
+        picLogo.Anchor = AnchorStyles.Top Or AnchorStyles.Right
+        
+        ' Charger le logo depuis les ressources ou un fichier
+        Try
+            ' Essayer de charger depuis un fichier
+            If File.Exists(Path.Combine(Application.StartupPath, "logo_eurodislog.jpg")) Then
+                picLogo.Image = Image.FromFile(Path.Combine(Application.StartupPath, "logo_eurodislog.jpg"))
+            End If
+        Catch ex As Exception
+            ' En cas d'erreur, ne pas afficher de logo
+            Console.WriteLine($"Erreur lors du chargement du logo: {ex.Message}")
+        End Try
+        
+        ' Ajout des contrôles au panel d'en-tête
+        pnlHeader.Controls.Add(lblTitle)
+        pnlHeader.Controls.Add(picLogo)
 
         ' Création des labels
         Dim lblNumeroCommande As New Label()
         lblNumeroCommande.Text = "Numéro de commande:"
-        lblNumeroCommande.Location = New System.Drawing.Point(20, 20)
+        lblNumeroCommande.Location = New System.Drawing.Point(20, 100)
         lblNumeroCommande.Size = New System.Drawing.Size(150, 20)
+        lblNumeroCommande.Font = New Font("Segoe UI", 10)
 
         Dim lblNumeroLigneMission As New Label()
         lblNumeroLigneMission.Text = "Numéro de ligne de mission:"
-        lblNumeroLigneMission.Location = New System.Drawing.Point(20, 50)
-        lblNumeroLigneMission.Size = New System.Drawing.Size(150, 20)
+        lblNumeroLigneMission.Location = New System.Drawing.Point(20, 130)
+        lblNumeroLigneMission.Size = New System.Drawing.Size(180, 20)
+        lblNumeroLigneMission.Font = New Font("Segoe UI", 10)
 
         ' Création des TextBox
         txtNumeroCommande = New TextBox()
-        txtNumeroCommande.Location = New System.Drawing.Point(180, 20)
-        txtNumeroCommande.Size = New System.Drawing.Size(150, 20)
+        txtNumeroCommande.Location = New System.Drawing.Point(200, 100)
+        txtNumeroCommande.Size = New System.Drawing.Size(200, 25)
+        txtNumeroCommande.Font = New Font("Segoe UI", 10)
 
         txtNumeroLigneMission = New TextBox()
-        txtNumeroLigneMission.Location = New System.Drawing.Point(180, 50)
-        txtNumeroLigneMission.Size = New System.Drawing.Size(150, 20)
+        txtNumeroLigneMission.Location = New System.Drawing.Point(200, 130)
+        txtNumeroLigneMission.Size = New System.Drawing.Size(200, 25)
+        txtNumeroLigneMission.Font = New Font("Segoe UI", 10)
 
         ' Création du bouton
         btnRechercher = New Button()
         btnRechercher.Text = "Rechercher"
-        btnRechercher.Location = New System.Drawing.Point(350, 35)
-        btnRechercher.Size = New System.Drawing.Size(100, 30)
+        btnRechercher.Location = New System.Drawing.Point(420, 115)
+        btnRechercher.Size = New System.Drawing.Size(120, 35)
+        btnRechercher.BackColor = colorEurodislogBlue
+        btnRechercher.ForeColor = Color.White
+        btnRechercher.FlatStyle = FlatStyle.Flat
+        btnRechercher.FlatAppearance.BorderSize = 0
+        btnRechercher.Font = New Font("Segoe UI", 10, FontStyle.Bold)
+        btnRechercher.Cursor = Cursors.Hand
         AddHandler btnRechercher.Click, AddressOf BtnRechercher_Click
 
         ' Création du DataGridView
         dgvResultats = New DataGridView()
-        dgvResultats.Location = New System.Drawing.Point(20, 100)
-        dgvResultats.Size = New System.Drawing.Size(750, 400)
+        dgvResultats.Location = New System.Drawing.Point(20, 180)
+        dgvResultats.Size = New System.Drawing.Size(1150, 550)
+        dgvResultats.Anchor = AnchorStyles.Top Or AnchorStyles.Left Or AnchorStyles.Right Or AnchorStyles.Bottom
         dgvResultats.AllowUserToAddRows = False
         dgvResultats.AllowUserToDeleteRows = False
         dgvResultats.ReadOnly = True
         dgvResultats.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
         dgvResultats.SelectionMode = DataGridViewSelectionMode.FullRowSelect
         dgvResultats.RowHeadersVisible = False
+        dgvResultats.BorderStyle = BorderStyle.Fixed3D
+        dgvResultats.Font = New Font("Segoe UI", 9)
+        dgvResultats.BackgroundColor = Color.White
+        dgvResultats.GridColor = Color.LightGray
+        dgvResultats.DefaultCellStyle.SelectionBackColor = colorEurodislogBlue
+        dgvResultats.DefaultCellStyle.SelectionForeColor = Color.White
+        dgvResultats.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(240, 240, 240)
+        dgvResultats.ColumnHeadersDefaultCellStyle.Font = New Font("Segoe UI", 9, FontStyle.Bold)
+        dgvResultats.ColumnHeadersHeight = 30
+        dgvResultats.RowTemplate.Height = 25
+        dgvResultats.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(245, 245, 245)
 
         ' Label de statut
         lblStatus = New Label()
         lblStatus.Text = "Prêt"
-        lblStatus.Location = New System.Drawing.Point(20, 520)
-        lblStatus.Size = New System.Drawing.Size(750, 20)
+        lblStatus.Location = New System.Drawing.Point(20, 740)
+        lblStatus.Size = New System.Drawing.Size(1150, 20)
+        lblStatus.Font = New Font("Segoe UI", 9)
+        lblStatus.Anchor = AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
 
         ' Ajout des contrôles au formulaire
+        Me.Controls.Add(pnlHeader)
         Me.Controls.Add(lblNumeroCommande)
         Me.Controls.Add(lblNumeroLigneMission)
         Me.Controls.Add(txtNumeroCommande)

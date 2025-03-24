@@ -2,7 +2,7 @@ Imports Microsoft.Data.SqlClient
 
 Public Class DatabaseConnection
     ' Chaîne de connexion par défaut (sera mise à jour via l'interface de configuration)
-    Private Shared _connectionString As String = "Data Source=localhost;Initial Catalog=master;Integrated Security=True;"
+    Private Shared _connectionString As String = "Data Source=localhost;Initial Catalog=master;Integrated Security=True;TrustServerCertificate=True;"
     
     ' Méthode pour obtenir une connexion à la base de données
     Public Shared Function GetConnection() As SqlConnection
@@ -35,7 +35,8 @@ Public Class DatabaseConnection
         Dim builder As New SqlConnectionStringBuilder With {
             .DataSource = serverName,
             .InitialCatalog = databaseName,
-            .IntegratedSecurity = useIntegratedSecurity
+            .IntegratedSecurity = useIntegratedSecurity,
+            .TrustServerCertificate = True
         }
         
         If Not useIntegratedSecurity Then
