@@ -1,0 +1,5 @@
+C:\Users\BDEQUEKER\OneDrive\Bureau\Eurodislog 2024-2025\UpdateError\obj\Debug\net6.0-windows\UpdateError.vbproj.AssemblyReference.cache
+C:\Users\BDEQUEKER\OneDrive\Bureau\Eurodislog 2024-2025\UpdateError\obj\Debug\net6.0-windows\UpdateError.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\BDEQUEKER\OneDrive\Bureau\Eurodislog 2024-2025\UpdateError\obj\Debug\net6.0-windows\UpdateError.AssemblyInfoInputs.cache
+C:\Users\BDEQUEKER\OneDrive\Bureau\Eurodislog 2024-2025\UpdateError\obj\Debug\net6.0-windows\UpdateError.AssemblyInfo.vb
+C:\Users\BDEQUEKER\OneDrive\Bureau\Eurodislog 2024-2025\UpdateError\obj\Debug\net6.0-windows\UpdateError.vbproj.CoreCompileInputs.cache
