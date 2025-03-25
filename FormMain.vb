@@ -368,7 +368,7 @@ Public Class FormMain
         Dim contextMenu As New ContextMenuStrip()
         
         ' Option pour éditer le numéro de tracking
-        Dim menuEditTracking As New ToolStripMenuItem("Modifier le numéro de tracking")
+        Dim menuEditTracking As New ToolStripMenuItem("Modifier le numéro de traçabilité")
         menuEditTracking.Image = GetIcon("edit")
         AddHandler menuEditTracking.Click, AddressOf MenuEditTracking_Click
         contextMenu.Items.Add(menuEditTracking)
@@ -435,12 +435,12 @@ End If
                 FormaterGrille()
                 
                 ' Afficher un message de confirmation
-                lblStatus.Text = $"Le numéro de tracking pour la ligne {exoKeyU} a été mis à jour."
+                lblStatus.Text = $"Le numéro de traçabilité pour la ligne {exoKeyU} a été mis à jour."
                 lblStatus.ForeColor = Color.FromArgb(0, 150, 0)  ' Vert
             End If
             
         Catch ex As Exception
-            MessageBox.Show($"Erreur lors de l'édition du numéro de tracking: {ex.Message}", 
+            MessageBox.Show($"Erreur lors de l'édition du numéro de traçabilité: {ex.Message}", 
                           "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
@@ -490,7 +490,7 @@ End If
             ' Permettre l'édition si des lignes ont été trouvées
             If resultats.Rows.Count > 0 Then
                 dgvResultats.ClearSelection()  ' Enlever la sélection par défaut
-                lblStatus.Text += " Double-cliquez sur un numéro de tracking pour le modifier."
+                lblStatus.Text += " Double-cliquez sur un numéro de traçabilité pour le modifier."
             End If
         Catch ex As Exception
             lblStatus.Text = $"Erreur: {ex.Message}"
@@ -499,7 +499,7 @@ End If
         End Try
     End Sub
 
-    ' Méthode pour formater la grille selon les conditions d'erreur
+' Méthode pour formater la grille selon les conditions d'erreur
     Private Sub FormaterGrille()
         Try
             ' Récupérer la source de données
@@ -531,7 +531,7 @@ End If
                     For Each cell As DataGridViewCell In row.Cells
                         ' Ajouter l'info-bulle uniquement si la cellule EXO_TRAK est concernée
                         If cell.OwningColumn.Name = "EXO_TRAK" Then
-                            cell.ToolTipText = "La longueur du code de suivi doit être de 9 ou 16 caractères."
+                            cell.ToolTipText = DataAccess.GetMessageErreur(dataRowView.Row)
                         End If
                     Next
                 End If
@@ -562,10 +562,18 @@ End If
     
     ' Méthode pour configurer les colonnes du DataGridView
     Private Sub ConfigurerColonnesDataGridView()
-    Private Sub ConfigurerColonnesDataGridView()
         Try
             ' Vérifier que le DataGridView a une source de données
             If dgvResultats.DataSource Is Nothing Then Return
+            
+            ' Masquer les colonnes techniques
+            If dgvResultats.Columns.Contains("EstEnErreur") Then
+                dgvResultats.Columns("EstEnErreur").Visible = False
+            End If
+            
+            If dgvResultats.Columns.Contains("MessageErreur") Then
+                dgvResultats.Columns("MessageErreur").Visible = False
+            End If
             
             ' Définir les titres des colonnes et leur ordre
             If dgvResultats.Columns.Contains("EXO_KEYU") Then

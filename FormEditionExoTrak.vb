@@ -8,11 +8,14 @@ Public Class FormEditionExoTrak
     ' Propriétés pour stocker les données de la ligne sélectionnée
     Public Property ExoKeyU As String
     Public Property ExoTrak As String
+    Public Property SpeQte As Decimal = 0
     
     ' Contrôles du formulaire
     Private lblExplication As Label
     Private lblExoKeyU As Label
     Private txtExoKeyU As TextBox
+    Private lblSpeQte As Label
+    Private txtSpeQte As TextBox
     Private lblExoTrak As Label
     Private txtExoTrak As TextBox
     Private lblRegles As Label
@@ -32,7 +35,7 @@ Public Class FormEditionExoTrak
     Private Sub InitializeComponent()
         ' Configuration de la fenêtre
         Me.Text = "Modification du numéro de tracking"
-        Me.Size = New Size(450, 300)
+        Me.Size = New Size(450, 350)
         Me.StartPosition = FormStartPosition.CenterParent
         Me.FormBorderStyle = FormBorderStyle.FixedDialog
         Me.MaximizeBox = False
@@ -62,30 +65,46 @@ Public Class FormEditionExoTrak
         txtExoKeyU.ReadOnly = True
         txtExoKeyU.BackColor = Color.FromArgb(240, 240, 240)
         
+        ' Label pour SpeQte
+        lblSpeQte = New Label()
+        lblSpeQte.Text = "Quantité:"
+        lblSpeQte.Location = New Point(20, 105)
+        lblSpeQte.Size = New Size(150, 20)
+        lblSpeQte.Font = New Font("Segoe UI", 9)
+        
+        ' TextBox pour SpeQte (en lecture seule)
+        txtSpeQte = New TextBox()
+        txtSpeQte.Location = New Point(170, 105)
+        txtSpeQte.Size = New Size(250, 25)
+        txtSpeQte.ReadOnly = True
+        txtSpeQte.BackColor = Color.FromArgb(240, 240, 240)
+        
         ' Label pour ExoTrak
         lblExoTrak = New Label()
         lblExoTrak.Text = "Numéro de tracking:"
-        lblExoTrak.Location = New Point(20, 105)
+        lblExoTrak.Location = New Point(20, 140)
         lblExoTrak.Size = New Size(150, 20)
         lblExoTrak.Font = New Font("Segoe UI", 9)
         
         ' TextBox pour ExoTrak
         txtExoTrak = New TextBox()
-        txtExoTrak.Location = New Point(170, 105)
+        txtExoTrak.Location = New Point(170, 140)
         txtExoTrak.Size = New Size(250, 25)
         
         ' Label pour les règles
         lblRegles = New Label()
-        lblRegles.Text = "Le numéro de tracking doit comporter exactement 9 ou 16 caractères."
-        lblRegles.Location = New Point(20, 140)
-        lblRegles.Size = New Size(400, 40)
+        lblRegles.Text = "Le numéro de tracking doit respecter les règles suivantes :" & Environment.NewLine & _
+                         "- 9 caractères si la quantité est égale à 1" & Environment.NewLine & _
+                         "- 16 caractères si la quantité est supérieure à 1"
+        lblRegles.Location = New Point(20, 175)
+        lblRegles.Size = New Size(400, 60)
         lblRegles.Font = New Font("Segoe UI", 9, FontStyle.Italic)
         lblRegles.ForeColor = Color.Gray
         
         ' Bouton Enregistrer
         btnEnregistrer = New Button()
         btnEnregistrer.Text = "Enregistrer"
-        btnEnregistrer.Location = New Point(120, 200)
+        btnEnregistrer.Location = New Point(120, 250)
         btnEnregistrer.Size = New Size(120, 35)
         btnEnregistrer.BackColor = colorBlue
         btnEnregistrer.ForeColor = Color.White
@@ -106,7 +125,7 @@ Public Class FormEditionExoTrak
         ' Bouton Annuler
         btnAnnuler = New Button()
         btnAnnuler.Text = "Annuler"
-        btnAnnuler.Location = New Point(250, 200)
+        btnAnnuler.Location = New Point(250, 250)
         btnAnnuler.Size = New Size(120, 35)
         btnAnnuler.BackColor = Color.FromArgb(240, 240, 240)
         btnAnnuler.ForeColor = Color.Black
@@ -129,6 +148,8 @@ Public Class FormEditionExoTrak
         Me.Controls.Add(lblExplication)
         Me.Controls.Add(lblExoKeyU)
         Me.Controls.Add(txtExoKeyU)
+        Me.Controls.Add(lblSpeQte)
+        Me.Controls.Add(txtSpeQte)
         Me.Controls.Add(lblExoTrak)
         Me.Controls.Add(txtExoTrak)
         Me.Controls.Add(lblRegles)
@@ -145,6 +166,7 @@ Public Class FormEditionExoTrak
         
         ' Remplir les champs avec les valeurs existantes
         txtExoKeyU.Text = ExoKeyU
+        txtSpeQte.Text = SpeQte.ToString()
         txtExoTrak.Text = ExoTrak
         
         ' Vérifier si la valeur actuelle est valide
@@ -159,7 +181,7 @@ Public Class FormEditionExoTrak
     ' Méthode pour valider la valeur d'ExoTrak
     Private Sub ValidateExoTrak()
         Dim valeurActuelle As String = txtExoTrak.Text.Trim()
-        Dim estValide As Boolean = DataAccess.EstExoTrakValide(valeurActuelle)
+        Dim estValide As Boolean = DataAccess.EstExoTrakValide(valeurActuelle, SpeQte)
         
         ' Mettre à jour l'apparence du champ et du bouton Enregistrer
         If estValide Then
@@ -179,10 +201,18 @@ Public Class FormEditionExoTrak
             Dim nouveauTrak As String = txtExoTrak.Text.Trim()
             
             ' Vérifier à nouveau si la valeur est valide
-            If Not DataAccess.EstExoTrakValide(nouveauTrak) Then
-                MessageBox.Show("Le numéro de tracking doit comporter exactement 9 ou 16 caractères.", 
-                               "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning)
-                return
+            If Not DataAccess.EstExoTrakValide(nouveauTrak, SpeQte) Then
+                Dim message As String
+                If SpeQte = 1 Then
+                    message = "Le numéro de tracking doit comporter exactement 9 caractères car la quantité est égale à 1."
+                ElseIf SpeQte > 1 Then
+                    message = "Le numéro de tracking doit comporter exactement 16 caractères car la quantité est supérieure à 1."
+                Else
+                    message = "Le numéro de tracking doit comporter exactement 9 ou 16 caractères selon la quantité."
+                End If
+                
+                MessageBox.Show(message, "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                Return
             End If
             
             ' Mettre à jour la base de données
@@ -211,6 +241,9 @@ Public Class FormEditionExoTrak
         Using form As New FormEditionExoTrak()
             form.ExoKeyU = exoKeyU
             form.ExoTrak = exoTrak
+            
+            ' Récupérer la quantité pour cette ligne
+            form.SpeQte = DataAccess.GetQuantiteForExoKeyU(exoKeyU)
             
             If form.ShowDialog() = DialogResult.OK Then
                 ' Retourner vrai et la nouvelle valeur
