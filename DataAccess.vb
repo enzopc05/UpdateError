@@ -11,8 +11,8 @@ Public Class DataAccess
             Using connection As SqlConnection = DatabaseConnection.GetConnection()
                 connection.Open()
                 
-                ' Créer la commande SQL avec les paramètres basée sur la structure réelle de la table
-                Dim query As String = "SELECT * FROM SPE_EXO WHERE OPE_NOOE = @NumeroCommande"
+                ' Requête SQL modifiée pour ne sélectionner que les colonnes souhaitées
+                Dim query As String = "SELECT EXO_KEYU, OPE_NOOE, MIL_NOLM, EXO_SCAN, EXO_TRAK FROM SPE_EXO WHERE OPE_NOOE = @NumeroCommande"
                 
                 ' Ajouter la condition sur le numéro de ligne de mission si elle est fournie
                 If Not String.IsNullOrEmpty(numeroLigneMission) Then
@@ -63,5 +63,39 @@ Public Class DataAccess
             Console.WriteLine($"Erreur lors de la vérification des critères d'erreur: {ex.Message}")
             Return False
         End Try
+    End Function
+    
+    ' Méthode pour mettre à jour la valeur d'EXO_TRAK
+    Public Shared Function UpdateExoTrak(exoKeyU As String, nouvelleValeur As String) As Boolean
+        Try
+            Using connection As SqlConnection = DatabaseConnection.GetConnection()
+                connection.Open()
+                
+                ' Créer la commande SQL avec les paramètres
+                Dim query As String = "UPDATE SPE_EXO SET EXO_TRAK = @NouvelleValeur WHERE EXO_KEYU = @ExoKeyU"
+                
+                Using command As New SqlCommand(query, connection)
+                    ' Ajouter les paramètres pour éviter les injections SQL
+                    command.Parameters.AddWithValue("@NouvelleValeur", nouvelleValeur)
+                    command.Parameters.AddWithValue("@ExoKeyU", exoKeyU)
+                    
+                    ' Exécuter la requête et retourner vrai si au moins une ligne a été mise à jour
+                    Dim rowsAffected As Integer = command.ExecuteNonQuery()
+                    Return rowsAffected > 0
+                End Using
+            End Using
+        Catch ex As Exception
+            ' Gérer l'exception
+            Console.WriteLine($"Erreur lors de la mise à jour de EXO_TRAK: {ex.Message}")
+            Throw
+        End Try
+    End Function
+    
+    ' Méthode pour vérifier si une valeur EXO_TRAK est valide
+    Public Shared Function EstExoTrakValide(exoTrak As String) As Boolean
+        If String.IsNullOrEmpty(exoTrak) Then Return False
+        
+        Dim valeurTrimmed As String = exoTrak.Trim()
+        Return valeurTrimmed.Length = 9 OrElse valeurTrimmed.Length = 16
     End Function
 End Class
