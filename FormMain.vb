@@ -238,8 +238,6 @@ Public Class FormMain
         lblNumeroLigneMission.ForeColor = colorDarkBlue
         lblNumeroLigneMission.AutoSize = True  ' Permettre au texte de s'afficher en entier
 
-        Me.AcceptButton = btnRechercher
-
         ' Création des TextBox avec style amélioré et espacement correct
         txtNumeroCommande = New TextBox()
         txtNumeroCommande.Location = New System.Drawing.Point(20, 45)
@@ -339,6 +337,8 @@ Me.Controls.Add(pnlFooter)
 Me.Controls.Add(pnlMain)
 Me.Controls.Add(pnlSearch)
 Me.Controls.Add(pnlHeader)
+        Me.AcceptButton = btnRechercher
+
     End Sub
     
     ' Méthode pour configurer le style du DataGridView
