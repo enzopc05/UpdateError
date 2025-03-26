@@ -306,4 +306,36 @@ Public Class DataAccess
             Throw
         End Try
     End Function
+
+    ' Récupérer la quantité pour un EXO_KEYU donné
+Public Shared Function GetQuantiteForExoKeyU(exoKeyU As String) As Decimal
+    Try
+        Using connection As SqlConnection = DatabaseConnection.GetConnection()
+            connection.Open()
+            
+            ' Créer la commande SQL avec les paramètres
+            Dim query As String = "SELECT EXO_QTE FROM SPE_EXO WHERE EXO_KEYU = @ExoKeyU"
+            
+            Using command As New SqlCommand(query, connection)
+                command.Parameters.AddWithValue("@ExoKeyU", exoKeyU)
+                
+                ' Exécuter la requête et récupérer la valeur
+                Dim result As Object = command.ExecuteScalar()
+                
+                If result IsNot Nothing AndAlso Not Convert.IsDBNull(result) Then
+                    Dim speQte As Decimal = 0
+                    If Decimal.TryParse(result.ToString(), speQte) Then
+                        Return speQte
+                    End If
+                End If
+                
+                ' Valeur par défaut si aucun résultat n'est trouvé
+                Return 0
+            End Using
+        End Using
+    Catch ex As Exception
+        Console.WriteLine($"Erreur lors de la récupération de la quantité: {ex.Message}")
+        Return 0
+    End Try
+End Function
 End Class
