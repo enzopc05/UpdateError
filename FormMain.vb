@@ -238,6 +238,8 @@ Public Class FormMain
         lblNumeroLigneMission.ForeColor = colorDarkBlue
         lblNumeroLigneMission.AutoSize = True  ' Permettre au texte de s'afficher en entier
 
+        Me.AcceptButton = btnRechercher
+
         ' Création des TextBox avec style amélioré et espacement correct
         txtNumeroCommande = New TextBox()
         txtNumeroCommande.Location = New System.Drawing.Point(20, 45)

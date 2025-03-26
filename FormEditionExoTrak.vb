@@ -160,19 +160,34 @@ Public Class FormEditionExoTrak
         AddHandler txtExoTrak.TextChanged, AddressOf TxtExoTrak_TextChanged
     End Sub
     
-    ' Méthode appelée lors du chargement du formulaire
-    Protected Overrides Sub OnLoad(e As EventArgs)
-        MyBase.OnLoad(e)
-        
-        ' Remplir les champs avec les valeurs existantes
-        txtExoKeyU.Text = ExoKeyU
-        txtSpeQte.Text = SpeQte.ToString()
-        txtExoTrak.Text = ExoTrak
-        
-        ' Vérifier si la valeur actuelle est valide
-        ValidateExoTrak()
-    End Sub
+' Méthode appelée lors du chargement du formulaire
+Protected Overrides Sub OnLoad(e As EventArgs)
+    MyBase.OnLoad(e)
     
+    ' Remplir les champs avec les valeurs existantes
+    txtExoKeyU.Text = ExoKeyU
+    txtSpeQte.Text = SpeQte.ToString()
+    txtExoTrak.Text = ExoTrak
+    
+    ' Vérifier si la valeur actuelle est valide
+    ValidateExoTrak()
+    
+    ' Ajouter un gestionnaire pour l'événement Shown
+    AddHandler Me.Shown, AddressOf FormEditionExoTrak_Shown
+End Sub
+
+' Gestionnaire d'événement qui s'exécute lorsque le formulaire est entièrement affiché
+Private Sub FormEditionExoTrak_Shown(sender As Object, e As EventArgs)
+    ' Donner le focus au champ de numéro de tracking
+    txtExoTrak.Focus()
+    
+    ' Sélectionner tout le texte
+    txtExoTrak.SelectionStart = 0
+    txtExoTrak.SelectionLength = txtExoTrak.Text.Length
+    
+    ' Alternative si la méthode ci-dessus ne fonctionne pas
+    txtExoTrak.Select(0, txtExoTrak.Text.Length)
+End Sub
     ' Gestionnaire d'événement pour la modification du texte dans txtExoTrak
     Private Sub TxtExoTrak_TextChanged(sender As Object, e As EventArgs)
         ValidateExoTrak()
