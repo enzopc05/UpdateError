@@ -27,6 +27,7 @@ Public Class FormMain
     ' Constructeur
     Public Sub New()
         InitializeComponent()
+        InitializeDataGridView()
         AjouterMenuConfiguration()
         
         ' Personnalisation supplémentaire après initialisation
@@ -127,9 +128,16 @@ Public Class FormMain
     
     ' Gestionnaire d'événement pour le menu Configuration
     Private Sub MenuConfiguration_Click(sender As Object, e As EventArgs)
-        If FormConnexion.ShowConfigurationDialog() Then
-            ' Reconnexion réussie, mettre à jour le statut
-            lblStatus.Text = "Configuration de la connexion mise à jour."
+        ' Vérifier les droits d'administrateur
+        If FormLogin.ShowLoginDialog() Then
+            ' L'authentification administrateur a réussi
+            If FormConnexion.ShowConfigurationDialog() Then
+                ' Reconnexion réussie, mettre à jour le statut
+                lblStatus.Text = "Configuration de la connexion mise à jour."
+            End If
+        Else
+            ' Authentification échouée
+            lblStatus.Text = "Accès à la configuration refusé."
         End If
     End Sub
     
@@ -386,14 +394,22 @@ Public Class FormMain
         End Sub
     End Sub
     
-    ' Gestionnaire d'événement pour le double-clic sur une cellule
+    ' Gestionnaire d'événement pour le double clic sur une cellule
     Private Sub DgvResultats_CellDoubleClick(sender As Object, e As DataGridViewCellEventArgs)
-        ' Vérifier que la cellule est valide
-        If e.RowIndex < 0 Then Return
+        ' Vérifier que c'est une cellule valide (pas un en-tête, pas en dehors de la grille)
+        If e.RowIndex < 0 OrElse e.ColumnIndex < 0 Then
+            Return
+        End If
         
-        ' Si la colonne cliquée est EXO_TRAK, ouvrir le formulaire d'édition
+        ' Vérifier si la colonne cliquée est "EXO_TRAK" (numéro de traçabilité)
         If dgvResultats.Columns(e.ColumnIndex).Name = "EXO_TRAK" Then
-            EditerExoTrakPourLigneSelectionnee()
+            ' Rendre cette cellule éditable
+            dgvResultats.ReadOnly = False
+            dgvResultats.Rows(e.RowIndex).Cells(e.ColumnIndex).ReadOnly = False
+            
+            ' Sélectionner la cellule et passer en mode édition
+            dgvResultats.CurrentCell = dgvResultats.Rows(e.RowIndex).Cells(e.ColumnIndex)
+            dgvResultats.BeginEdit(True)
         End If
     End Sub
     
@@ -615,6 +631,272 @@ End If
             
         Catch ex As Exception
             MessageBox.Show($"Erreur lors de la configuration des colonnes: {ex.Message}", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
+
+' Méthode pour initialiser le DataGridView avec les fonctionnalités d'édition
+    Private Sub InitializeDataGridView()
+        ' Définition de la couleur Eurodislog
+        Dim colorEurodislogBlueLocal As Color = Color.FromArgb(0, 175, 215)  ' Bleu Eurodislog (#00AFD7)
+        
+        ' Configuration de base du DataGridView
+        dgvResultats.Location = New System.Drawing.Point(20, 180)
+        dgvResultats.Size = New System.Drawing.Size(1150, 550)
+        dgvResultats.Anchor = AnchorStyles.Top Or AnchorStyles.Left Or AnchorStyles.Right Or AnchorStyles.Bottom
+        dgvResultats.AllowUserToAddRows = False
+        dgvResultats.AllowUserToDeleteRows = False
+        dgvResultats.ReadOnly = True  ' Par défaut, toutes les cellules sont en lecture seule
+        dgvResultats.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
+        dgvResultats.SelectionMode = DataGridViewSelectionMode.FullRowSelect
+        dgvResultats.RowHeadersVisible = False
+        dgvResultats.BorderStyle = BorderStyle.Fixed3D
+        dgvResultats.Font = New Font("Segoe UI", 9)
+        dgvResultats.BackgroundColor = Color.White
+        dgvResultats.GridColor = Color.LightGray
+        dgvResultats.DefaultCellStyle.SelectionBackColor = colorEurodislogBlueLocal
+        dgvResultats.DefaultCellStyle.SelectionForeColor = Color.White
+        dgvResultats.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(240, 240, 240)
+        dgvResultats.ColumnHeadersDefaultCellStyle.Font = New Font("Segoe UI", 9, FontStyle.Bold)
+        dgvResultats.ColumnHeadersHeight = 30
+        dgvResultats.RowTemplate.Height = 25
+        dgvResultats.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(245, 245, 245)
+        
+        ' Ajouter l'événement CellDoubleClick pour permettre l'édition
+        AddHandler dgvResultats.CellDoubleClick, AddressOf DgvResultats_CellDoubleClick
+        
+        ' Ajouter l'événement CellEndEdit pour valider les données après édition
+        AddHandler dgvResultats.CellEndEdit, AddressOf DgvResultats_CellEndEdit
+        
+        ' Ajouter l'événement DataBindingComplete pour configurer les colonnes après chargement des données
+        AddHandler dgvResultats.DataBindingComplete, AddressOf DgvResultats_DataBindingComplete
+        
+        ' Ajouter des boutons pour enregistrer les modifications
+        Dim btnEnregistrer As New Button()
+        btnEnregistrer.Text = "Enregistrer les modifications"
+        btnEnregistrer.Location = New Point(580, 130)
+        btnEnregistrer.Size = New Size(200, 35)
+        btnEnregistrer.BackColor = colorEurodislogBlueLocal
+        btnEnregistrer.ForeColor = Color.White
+        btnEnregistrer.FlatStyle = FlatStyle.Flat
+        btnEnregistrer.FlatAppearance.BorderSize = 0
+        btnEnregistrer.Font = New Font("Segoe UI", 10, FontStyle.Bold)
+        btnEnregistrer.Cursor = Cursors.Hand
+        btnEnregistrer.Enabled = False  ' Désactivé par défaut, actif seulement quand il y a des modifications
+        AddHandler btnEnregistrer.Click, AddressOf BtnEnregistrer_Click
+        Me.Controls.Add(btnEnregistrer)
+    End Sub
+
+' Gestionnaire d'événement pour la fin de l'édition d'une cellule
+    Private Sub DgvResultats_CellEndEdit(sender As Object, e As DataGridViewCellEventArgs)
+        ' Vérifier que c'est une cellule valide
+        If e.RowIndex < 0 OrElse e.ColumnIndex < 0 Then
+            Return
+        End If
+        
+        ' Vérifier si la colonne éditée est "EXO_TRAK"
+        If dgvResultats.Columns(e.ColumnIndex).Name = "EXO_TRAK" Then
+            Dim valeur As String = ""
+            
+            ' Obtenir la valeur de la cellule en gérant les valeurs nulles
+            If dgvResultats.Rows(e.RowIndex).Cells(e.ColumnIndex).Value IsNot Nothing Then
+                valeur = dgvResultats.Rows(e.RowIndex).Cells(e.ColumnIndex).Value.ToString().Trim()
+            End If
+            
+            ' Valider que la valeur a une longueur de 9 ou 16 caractères
+            If valeur.Length <> 9 AndAlso valeur.Length <> 16 Then
+                ' Indiquer visuellement que la valeur est invalide
+                dgvResultats.Rows(e.RowIndex).Cells(e.ColumnIndex).Style.BackColor = Color.LightPink
+                dgvResultats.Rows(e.RowIndex).Cells(e.ColumnIndex).Style.ForeColor = Color.Red
+                
+                ' Informer l'utilisateur
+                MessageBox.Show("Le numéro de traçabilité doit avoir exactement 9 ou 16 caractères.", "Erreur de validation", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                
+                ' Garder le bouton Enregistrer désactivé car il y a des erreurs
+                Dim btnEnregistrer As Button = FindButton("Enregistrer les modifications")
+                If btnEnregistrer IsNot Nothing Then
+                    btnEnregistrer.Enabled = False
+                End If
+            Else
+                ' La valeur est valide, restaurer les couleurs normales
+                dgvResultats.Rows(e.RowIndex).Cells(e.ColumnIndex).Style.BackColor = Color.White
+                dgvResultats.Rows(e.RowIndex).Cells(e.ColumnIndex).Style.ForeColor = Color.Black
+                
+                ' Activer le bouton Enregistrer
+                Dim btnEnregistrer As Button = FindButton("Enregistrer les modifications")
+                If btnEnregistrer IsNot Nothing Then
+                    btnEnregistrer.Enabled = True
+                End If
+            End If
+        End If
+        
+        ' Remettre la grille en mode lecture seule
+        dgvResultats.ReadOnly = True
+        dgvResultats.Rows(e.RowIndex).Cells(e.ColumnIndex).ReadOnly = True
+        
+        ' Vérifier s'il reste des erreurs dans la grille
+        VerifierErreursDansGrille()
+    End Sub
+
+        ' Méthode pour trouver un bouton par son texte
+    Private Function FindButton(buttonText As String) As Button
+        For Each control As Control In Me.Controls
+            If TypeOf control Is Button AndAlso DirectCast(control, Button).Text = buttonText Then
+                Return DirectCast(control, Button)
+            End If
+        Next
+        Return Nothing
+    End Function
+
+' Méthode pour vérifier s'il reste des erreurs dans la grille
+    Private Sub VerifierErreursDansGrille()
+        Dim erreursTrouvees As Boolean = False
+        
+        ' Parcourir toutes les lignes
+        For Each row As DataGridViewRow In dgvResultats.Rows
+            ' Trouver la cellule EXO_TRAK
+            Dim indexColonne As Integer = -1
+            For i As Integer = 0 To dgvResultats.Columns.Count - 1
+                If dgvResultats.Columns(i).Name = "EXO_TRAK" Then
+                    indexColonne = i
+                    Exit For
+                End If
+            Next
+            
+            If indexColonne >= 0 Then
+                Dim valeur As String = ""
+                ' Gérer les valeurs nulles
+                If row.Cells(indexColonne).Value IsNot Nothing Then
+                    valeur = row.Cells(indexColonne).Value.ToString().Trim()
+                End If
+                
+                ' Vérifier la validité de la valeur
+                If valeur.Length <> 9 AndAlso valeur.Length <> 16 Then
+                    erreursTrouvees = True
+                    Exit For
+                End If
+            End If
+        Next
+        
+        ' Activer ou désactiver le bouton Enregistrer en fonction de la présence d'erreurs
+        Dim btnEnregistrer As Button = FindButton("Enregistrer les modifications")
+        If btnEnregistrer IsNot Nothing Then
+            btnEnregistrer.Enabled = Not erreursTrouvees
+        End If
+    End Sub
+
+    ' Gestionnaire d'événement pour le chargement des données dans le DataGridView
+    Private Sub DgvResultats_DataBindingComplete(sender As Object, e As DataGridViewBindingCompleteEventArgs)
+        ' Configurer les colonnes
+        For Each column As DataGridViewColumn In dgvResultats.Columns
+            If column.Name = "EXO_TRAK" Then
+                ' Colonne du numéro de traçabilité éditable par double-clic
+                column.HeaderText = "N° Traçabilité"
+                column.ToolTipText = "Double-cliquez pour modifier (9 ou 16 caractères exigés)"
+                column.DefaultCellStyle.BackColor = Color.LightYellow  ' Mettre en évidence la colonne éditable
+            End If
+        Next
+        
+        ' Appliquer la mise en forme conditionnelle initiale
+        FormaterGrille()
+    End Sub
+
+' Gestionnaire d'événement pour le bouton Enregistrer
+    Private Sub BtnEnregistrer_Click(sender As Object, e As EventArgs)
+        Try
+            ' Récupérer la source de données
+            Dim dataTable As DataTable = TryCast(dgvResultats.DataSource, DataTable)
+            If dataTable Is Nothing Then
+                MessageBox.Show("Aucune donnée à enregistrer.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                Return
+            End If
+            
+            ' Vérifier s'il reste des erreurs
+            Dim erreursTrouvees As Boolean = False
+            Dim lignesAvecErreurs As New List(Of Integer)
+            
+            ' Parcourir les lignes pour vérifier les erreurs
+            For i As Integer = 0 To dataTable.Rows.Count - 1
+                Dim row As DataRow = dataTable.Rows(i)
+                
+                ' Vérifier la validité du numéro de traçabilité
+                If row.Table.Columns.Contains("EXO_TRAK") AndAlso Not row.IsNull("EXO_TRAK") Then
+                    Dim exoTrak As String = row("EXO_TRAK").ToString().Trim()
+                    If exoTrak.Length <> 9 AndAlso exoTrak.Length <> 16 Then
+                        erreursTrouvees = True
+                        lignesAvecErreurs.Add(i + 1)  ' +1 pour afficher le numéro de ligne à l'utilisateur (1-based)
+                    End If
+                End If
+            Next
+            
+            If erreursTrouvees Then
+                Dim message As String = "Impossible d'enregistrer les modifications. Les lignes suivantes contiennent des erreurs:" & vbCrLf
+                message &= String.Join(", ", lignesAvecErreurs)
+                MessageBox.Show(message, "Erreurs de validation", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                Return
+            End If
+            
+            ' Créer un dictionnaire pour stocker les mises à jour
+            Dim updates As New Dictionary(Of String, String)()
+            
+            ' Parcourir les lignes pour collecter les mises à jour
+            For Each row As DataRow In dataTable.Rows
+                ' Vérifier si la ligne a été modifiée
+                If row.RowState = DataRowState.Modified Then
+                    Dim exoId As String = row("EXO_ID").ToString()
+                    Dim exoTrak As String = row("EXO_TRAK").ToString().Trim()
+                    
+                    ' Ajouter au dictionnaire des mises à jour
+                    updates.Add(exoId, exoTrak)
+                End If
+            Next
+            
+            If updates.Count = 0 Then
+                MessageBox.Show("Aucune modification à enregistrer.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                Return
+            End If
+            
+            ' Confirmer les mises à jour
+            Dim confirmResult As DialogResult = MessageBox.Show(
+                $"Vous êtes sur le point de mettre à jour {updates.Count} numéro(s) de traçabilité. Continuer ?",
+                "Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
+                
+            If confirmResult = DialogResult.Yes Then
+                ' Enregistrer les modifications
+                lblStatus.Text = "Enregistrement des modifications en cours..."
+                Application.DoEvents()
+                
+                ' Appeler la méthode de mise à jour multiple
+                If DataAccess.UpdateMultipleTraceabilities(updates) Then
+                    MessageBox.Show("Les modifications ont été enregistrées avec succès.", "Succès", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                    
+                    ' Actualiser les données
+                    Dim numeroCommande As String = txtNumeroCommande.Text.Trim()
+                    Dim numeroLigneMission As String = txtNumeroLigneMission.Text.Trim()
+                    
+                    ' Recharger les données
+                    Dim resultats = DataAccess.GetLignesCommande(numeroCommande, numeroLigneMission)
+                    dgvResultats.DataSource = resultats
+                    
+                    ' Appliquer la mise en forme conditionnelle
+                    FormaterGrille()
+                    
+                    ' Désactiver le bouton Enregistrer
+                    Dim btnEnregistrer As Button = FindButton("Enregistrer les modifications")
+                    If btnEnregistrer IsNot Nothing Then
+                        btnEnregistrer.Enabled = False
+                    End If
+                    
+                    ' Mettre à jour le statut
+                    lblStatus.Text = $"{resultats.Rows.Count} ligne(s) trouvée(s). Modifications enregistrées."
+                Else
+                    MessageBox.Show("Aucune ligne n'a été mise à jour. Vérifiez les données et réessayez.", "Avertissement", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                    lblStatus.Text = "Échec de l'enregistrement des modifications."
+                End If
+            End If
+            
+        Catch ex As Exception
+            MessageBox.Show($"Erreur lors de l'enregistrement des modifications: {ex.Message}", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            lblStatus.Text = $"Erreur: {ex.Message}"
         End Try
     End Sub
 End Class

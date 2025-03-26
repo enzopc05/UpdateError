@@ -1,4 +1,6 @@
 Imports Microsoft.Data.SqlClient
+Imports System.IO
+Imports System.Windows.Forms
 
 Public Class DatabaseConnection
     ' Chaîne de connexion par défaut (sera mise à jour via l'interface de configuration)
@@ -45,5 +47,39 @@ Public Class DatabaseConnection
         End If
         
         _connectionString = builder.ToString()
+    End Sub
+    
+    ' Méthode pour charger la chaîne de connexion depuis le fichier de configuration
+    Public Shared Sub LoadFromConfigFile()
+        Dim configFile As String = Path.Combine(Application.StartupPath, "config.ini")
+        
+        If File.Exists(configFile) Then
+            Dim serveur As String = ""
+            Dim baseDeDonnees As String = ""
+            Dim authentificationWindows As Boolean = True
+            Dim utilisateur As String = ""
+            Dim motDePasse As String = ""
+            
+            Using reader As New StreamReader(configFile)
+                Dim line As String
+                While Not reader.EndOfStream
+                    line = reader.ReadLine()
+                    If line.StartsWith("Serveur=") Then
+                        serveur = Cryptage.DecrypterTexte(line.Substring("Serveur=".Length))
+                    ElseIf line.StartsWith("BaseDeDonnees=") Then
+                        baseDeDonnees = Cryptage.DecrypterTexte(line.Substring("BaseDeDonnees=".Length))
+                    ElseIf line.StartsWith("AuthentificationWindows=") Then
+                        Boolean.TryParse(line.Substring("AuthentificationWindows=".Length), authentificationWindows)
+                    ElseIf line.StartsWith("Utilisateur=") Then
+                        utilisateur = Cryptage.DecrypterTexte(line.Substring("Utilisateur=".Length))
+                    ElseIf line.StartsWith("MotDePasse=") Then
+                        motDePasse = Cryptage.DecrypterTexte(line.Substring("MotDePasse=".Length))
+                    End If
+                End While
+            End Using
+            
+            ' Mettre à jour la chaîne de connexion avec les valeurs chargées
+            SetConnectionString(serveur, baseDeDonnees, authentificationWindows, utilisateur, motDePasse)
+        End If
     End Sub
 End Class

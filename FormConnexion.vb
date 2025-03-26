@@ -229,18 +229,16 @@ Public Class FormConnexion
         Close()
     End Sub
     
-    ' Méthode pour enregistrer la configuration dans un fichier
+' Méthode pour enregistrer la configuration dans un fichier
     Private Sub EnregistrerConfiguration(serveur As String, baseDeDonnees As String, authentificationWindows As Boolean, utilisateur As String, motDePasse As String)
         Try
             Using writer As New StreamWriter(ConfigFile)
-                writer.WriteLine($"Serveur={serveur}")
-                writer.WriteLine($"BaseDeDonnees={baseDeDonnees}")
+                writer.WriteLine($"Serveur={Cryptage.CrypterTexte(serveur)}")
+                writer.WriteLine($"BaseDeDonnees={Cryptage.CrypterTexte(baseDeDonnees)}")
                 writer.WriteLine($"AuthentificationWindows={authentificationWindows}")
                 If Not authentificationWindows Then
-                    writer.WriteLine($"Utilisateur={utilisateur}")
-                    ' Noter que le mot de passe est stocké en clair. Pour une application de production,
-                    ' il faudrait envisager un chiffrement plus sécurisé.
-                    writer.WriteLine($"MotDePasse={motDePasse}")
+                    writer.WriteLine($"Utilisateur={Cryptage.CrypterTexte(utilisateur)}")
+                    writer.WriteLine($"MotDePasse={Cryptage.CrypterTexte(motDePasse)}")
                 End If
             End Using
             
@@ -265,15 +263,15 @@ Public Class FormConnexion
                     While Not reader.EndOfStream
                         line = reader.ReadLine()
                         If line.StartsWith("Serveur=") Then
-                            serveur = line.Substring("Serveur=".Length)
+                            serveur = Cryptage.DecrypterTexte(line.Substring("Serveur=".Length))
                         ElseIf line.StartsWith("BaseDeDonnees=") Then
-                            baseDeDonnees = line.Substring("BaseDeDonnees=".Length)
+                            baseDeDonnees = Cryptage.DecrypterTexte(line.Substring("BaseDeDonnees=".Length))
                         ElseIf line.StartsWith("AuthentificationWindows=") Then
                             Boolean.TryParse(line.Substring("AuthentificationWindows=".Length), authentificationWindows)
                         ElseIf line.StartsWith("Utilisateur=") Then
-                            utilisateur = line.Substring("Utilisateur=".Length)
+                            utilisateur = Cryptage.DecrypterTexte(line.Substring("Utilisateur=".Length))
                         ElseIf line.StartsWith("MotDePasse=") Then
-                            motDePasse = line.Substring("MotDePasse=".Length)
+                            motDePasse = Cryptage.DecrypterTexte(line.Substring("MotDePasse=".Length))
                         End If
                     End While
                 End Using

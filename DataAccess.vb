@@ -234,4 +234,76 @@ Public Class DataAccess
             Return 0
         End Try
     End Function
+
+    ' Méthode pour mettre à jour le numéro de traçabilité d'une ligne
+    Public Shared Function UpdateTraceability(exoId As String, newTraceability As String) As Boolean
+        Try
+            Using connection As SqlConnection = DatabaseConnection.GetConnection()
+                connection.Open()
+                
+                ' Créer la commande SQL pour mettre à jour le numéro de traçabilité
+                Dim query As String = "UPDATE SPE_EXO SET EXO_TRAK = @NewTraceability WHERE EXO_ID = @ExoId"
+                
+                Using command As New SqlCommand(query, connection)
+                    ' Ajouter les paramètres pour éviter les injections SQL
+                    command.Parameters.AddWithValue("@NewTraceability", newTraceability)
+                    command.Parameters.AddWithValue("@ExoId", exoId)
+                    
+                    ' Exécuter la commande et retourner true si au moins une ligne a été mise à jour
+                    Dim rowsAffected As Integer = command.ExecuteNonQuery()
+                    Return rowsAffected > 0
+                End Using
+            End Using
+        Catch ex As Exception
+            ' Gérer l'exception
+            Console.WriteLine($"Erreur lors de la mise à jour du numéro de traçabilité: {ex.Message}")
+            Throw
+        End Try
+    End Function
+    
+    ' Méthode pour mettre à jour plusieurs numéros de traçabilité en une seule transaction
+    Public Shared Function UpdateMultipleTraceabilities(updates As Dictionary(Of String, String)) As Boolean
+        Try
+            Using connection As SqlConnection = DatabaseConnection.GetConnection()
+                connection.Open()
+                
+                ' Créer une transaction pour garantir l'intégrité des données
+                Using transaction As SqlTransaction = connection.BeginTransaction()
+                    Try
+                        ' Préparer la commande SQL pour les mises à jour
+                        Dim query As String = "UPDATE SPE_EXO SET EXO_TRAK = @NewTraceability WHERE EXO_ID = @ExoId"
+                        
+                        Using command As New SqlCommand(query, connection, transaction)
+                            ' Paramètres qui seront réutilisés
+                            command.Parameters.Add("@NewTraceability", SqlDbType.NVarChar, 50)
+                            command.Parameters.Add("@ExoId", SqlDbType.NVarChar, 50)
+                            
+                            ' Boucle sur toutes les mises à jour
+                            For Each update In updates
+                                ' Mettre à jour les valeurs des paramètres
+                                command.Parameters("@ExoId").Value = update.Key
+                                command.Parameters("@NewTraceability").Value = update.Value
+                                
+                                ' Exécuter la commande
+                                command.ExecuteNonQuery()
+                            Next
+                            
+                            ' Valider la transaction
+                            transaction.Commit()
+                            Return True
+                        End Using
+                    Catch ex As Exception
+                        ' En cas d'erreur, annuler la transaction
+                        transaction.Rollback()
+                        Console.WriteLine($"Erreur lors de la mise à jour des numéros de traçabilité: {ex.Message}")
+                        Throw
+                    End Try
+                End Using
+            End Using
+        Catch ex As Exception
+            ' Gérer l'exception
+            Console.WriteLine($"Erreur lors de la mise à jour des numéros de traçabilité: {ex.Message}")
+            Throw
+        End Try
+    End Function
 End Class
