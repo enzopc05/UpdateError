@@ -156,7 +156,7 @@ Public Class FormMain
     ' Initialisation des composants
     Private Sub InitializeComponent()
         ' Configuration de la fenêtre
-        Me.Text = "UpdateError - Eurodislog"
+        Me.Text = "Traçabilité Dermalogica - Eurodislog"
         Me.Size = New System.Drawing.Size(1200, 800)
         Me.StartPosition = FormStartPosition.CenterScreen
         Me.BackColor = colorLightGray  ' Fond gris clair pour l'application
@@ -171,30 +171,50 @@ Public Class FormMain
         
         ' Création du titre
         lblTitle = New Label()
-        lblTitle.Text = "Vérification des commandes - UpdateError"
+        lblTitle.Text = "Vérification des traçabilités exotiques - Dermalogica"
         lblTitle.Font = New Font("Segoe UI", 18, FontStyle.Bold)
         lblTitle.ForeColor = Color.White
         lblTitle.AutoSize = True
         lblTitle.Location = New Point(20, 25)
         lblTitle.Anchor = AnchorStyles.Top Or AnchorStyles.Left Or AnchorStyles.Bottom
         
-        ' Création du logo (à droite du titre)
-        picLogo = New PictureBox()
-        picLogo.Size = New Size(200, 60)
-        picLogo.Location = New Point(pnlHeader.Width - 220, 10)
-        picLogo.SizeMode = PictureBoxSizeMode.Zoom
-        picLogo.BackColor = Color.Transparent
-        picLogo.Anchor = AnchorStyles.Top Or AnchorStyles.Right Or AnchorStyles.Bottom
+' Création du logo (à droite du titre)
+picLogo = New PictureBox()
+picLogo.Size = New Size(200, 60)
+picLogo.Location = New Point(pnlHeader.Width - 220, 10)
+picLogo.SizeMode = PictureBoxSizeMode.Zoom
+picLogo.BackColor = Color.Transparent
+picLogo.Anchor = AnchorStyles.Top Or AnchorStyles.Right
+
+' Création d'une image de texte comme logo
+Dim logoImage As New Bitmap(200, 60)
+Using g As Graphics = Graphics.FromImage(logoImage)
+    g.Clear(Color.Transparent)
+    Using brush As New SolidBrush(Color.White)
+        Using font As New Font("Arial", 16, FontStyle.Bold)
+            g.DrawString("EURODISLOG", font, brush, 10, 20)
+        End Using
+    End Using
+End Using
+picLogo.Image = logoImage
         
-        ' Charger le logo depuis les ressources ou un fichier
-        Try
-            If File.Exists(Path.Combine(Application.StartupPath, "logo_eurodislog.jpg")) Then
-                picLogo.Image = Image.FromFile(Path.Combine(Application.StartupPath, "logo_eurodislog.jpg"))
-            End If
-        Catch ex As Exception
-            ' En cas d'erreur, ne pas afficher de logo
-            Console.WriteLine($"Erreur lors du chargement du logo: {ex.Message}")
-        End Try
+' Charger le logo depuis les ressources ou un fichier
+Try
+    ' Utiliser le chemin absolu vers l'image dans le dossier du projet
+    Dim logoPath As String = Path.Combine(Application.StartupPath, "logo_eurodislog.jpg")
+    If File.Exists(logoPath) Then
+        ' Charger l'image avec FromFile et la libérer immédiatement
+        Using originalImage As Image = Image.FromFile(logoPath)
+            ' Créer une copie de l'image pour éviter le verrouillage du fichier
+            picLogo.Image = New Bitmap(originalImage)
+        End Using
+    Else
+        ' Message de débogage si le fichier n'existe pas
+        MessageBox.Show("Logo introuvable: " & logoPath, "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+    End If
+Catch ex As Exception
+    MessageBox.Show("Erreur lors du chargement du logo: " & ex.Message, "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error)
+End Try
         
         ' Ajout des contrôles au panel d'en-tête
         pnlHeader.Controls.Add(lblTitle)

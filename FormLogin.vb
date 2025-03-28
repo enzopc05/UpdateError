@@ -15,7 +15,7 @@ Public Class FormLogin
     ' Informations de connexion admin (normalement stockées de façon sécurisée)
     ' Note: Dans une application réelle, ces valeurs devraient être cryptées et/ou stockées de manière plus sécurisée
     Private ReadOnly _adminUser As String = "admin"
-    Private ReadOnly _adminPassword As String = "admin123"
+    Private ReadOnly _adminPassword As String = "adminsadmin"
     
     ' Couleur de la charte graphique Eurodislog
     Private ReadOnly _colorEurodislogBlue As Color = Color.FromArgb(0, 175, 215)  ' Bleu Eurodislog (#00AFD7)
