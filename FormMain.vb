@@ -302,15 +302,7 @@ End Try
         
         AddHandler btnRechercher.Click, AddressOf BtnRechercher_Click
 
-        ' Ajout des contrôles au panel de recherche
-        pnlSearch.Controls.Add(lblNumeroCommande)
-        pnlSearch.Controls.Add(lblNumeroLigneMission)
-        pnlSearch.Controls.Add(txtNumeroCommande)
-        pnlSearch.Controls.Add(txtNumeroLigneMission)
-        pnlSearch.Controls.Add(btnRechercher)
-        pnlSearch.Controls.Add(chkAfficherTout)
-
-        ' Création de la case à cocher
+                ' Création de la case à cocher
         chkAfficherTout = New CheckBox()
         chkAfficherTout.Text = "Afficher toutes les lignes"
         chkAfficherTout.Location = New System.Drawing.Point(810, 45)
@@ -318,6 +310,16 @@ End Try
         chkAfficherTout.Font = New Font("Segoe UI", 10)
         chkAfficherTout.ForeColor = colorDarkBlue
         chkAfficherTout.Checked = False
+        ' Ajouter le gestionnaire d'événement pour le changement d'état
+        AddHandler chkAfficherTout.CheckedChanged, AddressOf ChkAfficherTout_CheckedChanged
+
+        ' Ajout des contrôles au panel de recherche
+        pnlSearch.Controls.Add(lblNumeroCommande)
+        pnlSearch.Controls.Add(lblNumeroLigneMission)
+        pnlSearch.Controls.Add(txtNumeroCommande)
+        pnlSearch.Controls.Add(txtNumeroLigneMission)
+        pnlSearch.Controls.Add(btnRechercher)
+        pnlSearch.Controls.Add(chkAfficherTout)
 
         ' Création du DataGridView avec style amélioré
         dgvResultats = New DataGridView()
@@ -425,6 +427,75 @@ Me.Controls.Add(pnlHeader)
             End If
         End Sub
     End Sub
+
+    ' Gestionnaire d'événement pour le changement d'état de la case à cocher
+Private Sub ChkAfficherTout_CheckedChanged(sender As Object, e As EventArgs)
+    ' Vérifier si des données ont déjà été chargées
+    Dim dataTable As DataTable = TryCast(dgvResultats.DataSource, DataTable)
+    If dataTable Is Nothing Then
+        Return ' Aucune donnée à filtrer
+    End If
+    
+    ' Récupérer les paramètres de la dernière recherche
+    Dim numeroCommande As String = txtNumeroCommande.Text.Trim()
+    Dim numeroLigneMission As String = txtNumeroLigneMission.Text.Trim()
+    
+    ' Ignorer les placeholders
+    If numeroCommande = txtNumeroCommande.Tag.ToString() Then
+        numeroCommande = ""
+    End If
+    
+    If numeroLigneMission = txtNumeroLigneMission.Tag.ToString() Then
+        numeroLigneMission = ""
+    End If
+    
+    ' S'assurer qu'un numéro de commande a été saisi
+    If String.IsNullOrEmpty(numeroCommande) Then
+        Return
+    End If
+    
+    ' Mise à jour du statut
+    lblStatus.Text = "Actualisation de l'affichage..."
+    lblStatus.ForeColor = colorBlue
+    Application.DoEvents()
+    
+    ' Récupérer toutes les données
+    Dim resultatsComplets = DataAccess.GetLignesCommande(numeroCommande, numeroLigneMission)
+    
+    ' Filtrer si nécessaire
+    Dim resultats As DataTable
+    If Not chkAfficherTout.Checked Then
+        ' N'afficher que les lignes en erreur
+        resultats = resultatsComplets.Clone()
+        For Each row As DataRow In resultatsComplets.Rows
+            If DataAccess.EstEnErreur(row) Then
+                resultats.ImportRow(row)
+            End If
+        Next
+    Else
+        ' Afficher toutes les lignes
+        resultats = resultatsComplets
+    End If
+    
+    ' Mettre à jour l'affichage
+    dgvResultats.DataSource = resultats
+    
+    ' Formater la grille
+    FormaterGrille()
+    
+    ' Mettre à jour le message de statut
+    Dim message As String = $"{resultats.Rows.Count} ligne(s) trouvée(s)."
+    If Not chkAfficherTout.Checked Then
+        message = $"{resultats.Rows.Count} ligne(s) en erreur sur {resultatsComplets.Rows.Count} ligne(s) au total."
+    End If
+    lblStatus.Text = message
+    lblStatus.ForeColor = Color.Black
+    
+    If resultats.Rows.Count > 0 Then
+        dgvResultats.ClearSelection()
+        lblStatus.Text += " Double-cliquez sur un numéro de traçabilité pour le modifier."
+    End If
+End Sub
     
     ' Gestionnaire d'événement pour le double clic sur une cellule
 Private Sub DgvResultats_CellDoubleClick(sender As Object, e As DataGridViewCellEventArgs)
