@@ -18,6 +18,7 @@ Public Class FormMain
     Private picLogo As PictureBox
     Private pnlSearch As Panel
     Private pnlFooter As Panel
+    Private chkAfficherTout As CheckBox
 
     ' Couleurs de la charte graphique
     Private ReadOnly colorBlue As Color = Color.FromArgb(0, 175, 215)  ' Bleu (#00AFD7)
@@ -307,6 +308,16 @@ End Try
         pnlSearch.Controls.Add(txtNumeroCommande)
         pnlSearch.Controls.Add(txtNumeroLigneMission)
         pnlSearch.Controls.Add(btnRechercher)
+        pnlSearch.Controls.Add(chkAfficherTout)
+
+        ' Création de la case à cocher
+        chkAfficherTout = New CheckBox()
+        chkAfficherTout.Text = "Afficher toutes les lignes"
+        chkAfficherTout.Location = New System.Drawing.Point(810, 45)
+        chkAfficherTout.Size = New System.Drawing.Size(200, 30)
+        chkAfficherTout.Font = New Font("Segoe UI", 10)
+        chkAfficherTout.ForeColor = colorDarkBlue
+        chkAfficherTout.Checked = False
 
         ' Création du DataGridView avec style amélioré
         dgvResultats = New DataGridView()
@@ -444,8 +455,41 @@ Private Sub DgvResultats_CellDoubleClick(sender As Object, e As DataGridViewCell
             ' Mettre à jour la valeur dans la grille
             row.Cells("EXO_TRAK").Value = result.Item2
             
-            ' Rafraîchir la mise en forme conditionnelle
-            FormaterGrille()
+            ' Récupérer le DataRowView correspondant
+            Dim dataRowView As DataRowView = TryCast(row.DataBoundItem, DataRowView)
+            If dataRowView IsNot Nothing Then
+                ' Mettre à jour le DataRow sous-jacent
+                dataRowView.Row("EXO_TRAK") = result.Item2
+                
+                ' Recalculer l'état d'erreur pour cette ligne
+                Dim speQte As Decimal = DataAccess.GetQuantiteForExoKeyU(exoKeyU)
+                Dim estEnErreur As Boolean = Not DataAccess.EstExoTrakValide(result.Item2, speQte)
+                dataRowView.Row("EstEnErreur") = estEnErreur
+                
+                If estEnErreur Then
+                    If speQte = 1 Then
+                        dataRowView.Row("MessageErreur") = "La quantité est 1, le numéro de tracking doit comporter exactement 9 caractères."
+                    Else
+                        dataRowView.Row("MessageErreur") = "La quantité est supérieure à 1, le numéro de tracking doit comporter exactement 16 caractères."
+                    End If
+                Else
+                    dataRowView.Row("MessageErreur") = ""
+                End If
+                
+                ' Mise à jour du style de la ligne
+                If estEnErreur Then
+                    row.DefaultCellStyle.BackColor = Color.FromArgb(255, 235, 238)  ' Rose pâle
+                    row.DefaultCellStyle.ForeColor = Color.FromArgb(213, 0, 0)  ' Rouge foncé
+                    row.DefaultCellStyle.Font = New Font(dgvResultats.DefaultCellStyle.Font, FontStyle.Bold)
+                Else
+                    row.DefaultCellStyle.BackColor = Color.FromArgb(240, 255, 240)  ' Vert très pâle
+                    row.DefaultCellStyle.ForeColor = Color.FromArgb(0, 150, 0)  ' Vert
+                    row.DefaultCellStyle.Font = New Font(dgvResultats.DefaultCellStyle.Font, FontStyle.Regular)
+                End If
+            End If
+            
+            ' Rafraîchir l'affichage
+            dgvResultats.Refresh()
             
             ' Afficher un message de confirmation
             lblStatus.Text = $"Le numéro de traçabilité pour la ligne {exoKeyU} a été mis à jour."
@@ -488,8 +532,41 @@ Private Sub EditerExoTrakPourLigneSelectionnee()
             ' Mettre à jour la valeur dans la grille
             row.Cells("EXO_TRAK").Value = result.Item2
             
-            ' Rafraîchir la mise en forme conditionnelle
-            FormaterGrille()
+            ' Récupérer le DataRowView correspondant
+            Dim dataRowView As DataRowView = TryCast(row.DataBoundItem, DataRowView)
+            If dataRowView IsNot Nothing Then
+                ' Mettre à jour le DataRow sous-jacent
+                dataRowView.Row("EXO_TRAK") = result.Item2
+                
+                ' Recalculer l'état d'erreur pour cette ligne
+                Dim speQte As Decimal = DataAccess.GetQuantiteForExoKeyU(exoKeyU)
+                Dim estEnErreur As Boolean = Not DataAccess.EstExoTrakValide(result.Item2, speQte)
+                dataRowView.Row("EstEnErreur") = estEnErreur
+                
+                If estEnErreur Then
+                    If speQte = 1 Then
+                        dataRowView.Row("MessageErreur") = "La quantité est 1, le numéro de tracking doit comporter exactement 9 caractères."
+                    Else
+                        dataRowView.Row("MessageErreur") = "La quantité est supérieure à 1, le numéro de tracking doit comporter exactement 16 caractères."
+                    End If
+                Else
+                    dataRowView.Row("MessageErreur") = ""
+                End If
+                
+                ' Mise à jour du style de la ligne
+                If estEnErreur Then
+                    row.DefaultCellStyle.BackColor = Color.FromArgb(255, 235, 238)  ' Rose pâle
+                    row.DefaultCellStyle.ForeColor = Color.FromArgb(213, 0, 0)  ' Rouge foncé
+                    row.DefaultCellStyle.Font = New Font(dgvResultats.DefaultCellStyle.Font, FontStyle.Bold)
+                Else
+                    row.DefaultCellStyle.BackColor = Color.FromArgb(240, 255, 240)  ' Vert très pâle
+                    row.DefaultCellStyle.ForeColor = Color.FromArgb(0, 150, 0)  ' Vert
+                    row.DefaultCellStyle.Font = New Font(dgvResultats.DefaultCellStyle.Font, FontStyle.Regular)
+                End If
+            End If
+            
+            ' Rafraîchir l'affichage
+            dgvResultats.Refresh()
             
             ' Afficher un message de confirmation
             lblStatus.Text = $"Le numéro de traçabilité pour la ligne {exoKeyU} a été mis à jour."
@@ -502,63 +579,78 @@ Private Sub EditerExoTrakPourLigneSelectionnee()
     End Try
 End Sub
     ' Gestionnaire d'événement pour le bouton Rechercher
-    Private Sub BtnRechercher_Click(sender As Object, e As EventArgs)
-        Try
-            ' Récupération des valeurs saisies
-            Dim numeroCommande As String = txtNumeroCommande.Text.Trim()
-            Dim numeroLigneMission As String = txtNumeroLigneMission.Text.Trim()
-            
-            ' Ignorer les placeholders
-            If numeroCommande = txtNumeroCommande.Tag.ToString() Then
-                numeroCommande = ""
-            End If
-            
-            If numeroLigneMission = txtNumeroLigneMission.Tag.ToString() Then
-                numeroLigneMission = ""
-            End If
+Private Sub BtnRechercher_Click(sender As Object, e As EventArgs)
+    Try
+        ' Récupération des valeurs saisies
+        Dim numeroCommande As String = txtNumeroCommande.Text.Trim()
+        Dim numeroLigneMission As String = txtNumeroLigneMission.Text.Trim()
+        
+        ' Ignorer les placeholders
+        If numeroCommande = txtNumeroCommande.Tag.ToString() Then
+            numeroCommande = ""
+        End If
+        
+        If numeroLigneMission = txtNumeroLigneMission.Tag.ToString() Then
+            numeroLigneMission = ""
+        End If
 
-            ' Validation des entrées
-            If String.IsNullOrEmpty(numeroCommande) Then
-                lblStatus.Text = "Veuillez saisir un numéro de commande."
-                txtNumeroCommande.Focus()
-                return
-            End If
+        ' Validation des entrées
+        If String.IsNullOrEmpty(numeroCommande) Then
+            lblStatus.Text = "Veuillez saisir un numéro de commande."
+            txtNumeroCommande.Focus()
+            return
+        End If
 
-            ' Mise à jour du statut avec indicateur visuel
-            lblStatus.Text = "Recherche en cours..."
-            lblStatus.ForeColor = colorBlue
-            Application.DoEvents()
+        ' Mise à jour du statut avec indicateur visuel
+        lblStatus.Text = "Recherche en cours..."
+        lblStatus.ForeColor = colorBlue
+        Application.DoEvents()
 
-            ' Appel à la méthode pour récupérer les données
-            Dim resultats = DataAccess.GetLignesCommande(numeroCommande, numeroLigneMission)
+        ' Appel à la méthode pour récupérer les données
+        Dim resultats = DataAccess.GetLignesCommande(numeroCommande, numeroLigneMission)
+        
+        ' Filtrer pour n'afficher que les lignes en erreur si la case n'est pas cochée
+        If Not chkAfficherTout.Checked Then
+            Dim lignesEnErreur = resultats.Clone()
+            For Each row As DataRow In resultats.Rows
+                If DataAccess.EstEnErreur(row) Then
+                    lignesEnErreur.ImportRow(row)
+                End If
+            Next
+            resultats = lignesEnErreur
+        End If
 
-            ' Affichage des résultats
-            dgvResultats.DataSource = resultats
+        ' Affichage des résultats
+        dgvResultats.DataSource = resultats
 
-            ' Application de la mise en forme conditionnelle
-            FormaterGrille()
+        ' Application de la mise en forme conditionnelle
+        FormaterGrille()
 
-            ' Mise à jour du statut
-            Dim message As String = $"{resultats.Rows.Count} ligne(s) trouvée(s)."
-            lblStatus.Text = message
-            lblStatus.ForeColor = Color.Black
-            
-            ' Permettre l'édition si des lignes ont été trouvées
-            If resultats.Rows.Count > 0 Then
-                dgvResultats.ClearSelection()  ' Enlever la sélection par défaut
-                lblStatus.Text += " Double-cliquez sur un numéro de traçabilité pour le modifier."
-            End If
-        Catch ex As Exception
-            lblStatus.Text = $"Erreur: {ex.Message}"
-            lblStatus.ForeColor = Color.Red
-            MessageBox.Show($"Une erreur est survenue: {ex.Message}", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error)
-            Dim btnEnregistrer As Button = Controls.Find("btnEnregistrerModifications", True).FirstOrDefault()
-If btnEnregistrer IsNot Nothing Then
-    btnEnregistrer.Visible = False
-    btnEnregistrer.Enabled = False
-End If
-        End Try
-    End Sub
+        ' Mise à jour du statut
+        Dim message As String = $"{resultats.Rows.Count} ligne(s) trouvée(s)."
+        If Not chkAfficherTout.Checked Then
+            Dim totalLignes = DataAccess.GetLignesCommande(numeroCommande, numeroLigneMission).Rows.Count
+            message = $"{resultats.Rows.Count} ligne(s) en erreur sur {totalLignes} ligne(s) au total."
+        End If
+        lblStatus.Text = message
+        lblStatus.ForeColor = Color.Black
+        
+        ' Permettre l'édition si des lignes ont été trouvées
+        If resultats.Rows.Count > 0 Then
+            dgvResultats.ClearSelection()  ' Enlever la sélection par défaut
+            lblStatus.Text += " Double-cliquez sur un numéro de traçabilité pour le modifier."
+        End If
+    Catch ex As Exception
+        lblStatus.Text = $"Erreur: {ex.Message}"
+        lblStatus.ForeColor = Color.Red
+        MessageBox.Show($"Une erreur est survenue: {ex.Message}", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        Dim btnEnregistrer As Button = Controls.Find("btnEnregistrerModifications", True).FirstOrDefault()
+        If btnEnregistrer IsNot Nothing Then
+            btnEnregistrer.Visible = False
+            btnEnregistrer.Enabled = False
+        End If
+    End Try
+End Sub
 
 ' Méthode pour formater la grille selon les conditions d'erreur
     Private Sub FormaterGrille()

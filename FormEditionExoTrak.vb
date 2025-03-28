@@ -19,6 +19,7 @@ Public Class FormEditionExoTrak
     Private lblExoTrak As Label
     Private txtExoTrak As TextBox
     Private lblRegles As Label
+    Private lblCompteur As Label
     Private btnEnregistrer As Button
     Private btnAnnuler As Button
     
@@ -90,13 +91,21 @@ Public Class FormEditionExoTrak
         txtExoTrak = New TextBox()
         txtExoTrak.Location = New Point(170, 140)
         txtExoTrak.Size = New Size(250, 25)
+
+        ' Label pour le compteur de caractères
+        lblCompteur = New Label()
+        lblCompteur.Text = "0 caractère(s)"
+        lblCompteur.Location = New Point(170, 165)
+        lblCompteur.Size = New Size(250, 20)
+        lblCompteur.Font = New Font("Segoe UI", 8)
+        lblCompteur.ForeColor = Color.Gray
         
         ' Label pour les règles
         lblRegles = New Label()
         lblRegles.Text = "Le numéro de tracking doit respecter les règles suivantes :" & Environment.NewLine & _
                          "- 9 caractères si la quantité est égale à 1" & Environment.NewLine & _
                          "- 16 caractères si la quantité est supérieure à 1"
-        lblRegles.Location = New Point(20, 175)
+        lblRegles.Location = New Point(20, 195)
         lblRegles.Size = New Size(400, 60)
         lblRegles.Font = New Font("Segoe UI", 9, FontStyle.Italic)
         lblRegles.ForeColor = Color.Gray
@@ -153,6 +162,7 @@ Public Class FormEditionExoTrak
         Me.Controls.Add(lblExoTrak)
         Me.Controls.Add(txtExoTrak)
         Me.Controls.Add(lblRegles)
+        Me.Controls.Add(lblCompteur)
         Me.Controls.Add(btnEnregistrer)
         Me.Controls.Add(btnAnnuler)
         
@@ -189,9 +199,28 @@ Private Sub FormEditionExoTrak_Shown(sender As Object, e As EventArgs)
     txtExoTrak.Select(0, txtExoTrak.Text.Length)
 End Sub
     ' Gestionnaire d'événement pour la modification du texte dans txtExoTrak
-    Private Sub TxtExoTrak_TextChanged(sender As Object, e As EventArgs)
-        ValidateExoTrak()
-    End Sub
+Private Sub TxtExoTrak_TextChanged(sender As Object, e As EventArgs)
+    ' Mettre à jour le compteur de caractères
+    Dim nombreCaracteres As Integer = txtExoTrak.Text.Trim().Length
+    Dim texteCompteur As String = $"{nombreCaracteres} caractère(s)"
+    
+    ' Adapter la couleur en fonction de la validité
+    If (SpeQte = 1 AndAlso nombreCaracteres = 9) OrElse (SpeQte > 1 AndAlso nombreCaracteres = 16) Then
+        lblCompteur.ForeColor = Color.FromArgb(0, 150, 0)  ' Vert
+        lblCompteur.Font = New Font(lblCompteur.Font, FontStyle.Bold)
+    ElseIf nombreCaracteres > 0 Then
+        lblCompteur.ForeColor = Color.FromArgb(213, 0, 0)  ' Rouge
+        lblCompteur.Font = New Font(lblCompteur.Font, FontStyle.Bold)
+    Else
+        lblCompteur.ForeColor = Color.Gray
+        lblCompteur.Font = New Font(lblCompteur.Font, FontStyle.Regular)
+    End If
+    
+    lblCompteur.Text = texteCompteur
+    
+    ' Valider le champ
+    ValidateExoTrak()
+End Sub
     
     ' Méthode pour valider la valeur d'ExoTrak
     Private Sub ValidateExoTrak()
